@@ -10,9 +10,10 @@
 <div class="legend"><span><i class="dot blue"></i>You</span><span><i class="dot pink"></i>Kayla</span></div>
 <p class="hint">Tap a date: blue → pink → clear. Your changes save automatically on this device.</p>
 <div class="actions"><button class="primary" id="share">Share image</button><button id="save">Save PNG</button><button id="backup">Backup</button><button id="restore">Restore</button><input type="file" id="file" accept="application/json" hidden></div>
-<div class="status" id="status" role="status" aria-live="polite"></div><footer>Stored locally on this device. No account or synchronization required.</footer>
+<div class="status" id="status" role="status" aria-live="polite">Starting calendar…</div><footer>Stored locally on this device. No account or synchronization required.</footer>
 </main><canvas id="exportCanvas"></canvas>
 <script>
+window.addEventListener('error',function(e){var x=document.getElementById('status');if(x)x.textContent='App error: '+e.message+' (line '+e.lineno+')'});
 (()=>{'use strict';
 const KEY='bodhi-calendar-days-v1',VIEW='bodhi-calendar-view-v1';
 let assignments={};try{const x=JSON.parse(localStorage.getItem(KEY)||'{}');if(x&&typeof x==='object'&&!Array.isArray(x))assignments=x}catch{}
@@ -38,6 +39,6 @@ el('share').onclick=async()=>{try{const blob=await image(),file=new File([blob],
 el('backup').onclick=()=>{download(new Blob([JSON.stringify({version:1,assignments},null,2)],{type:'application/json'}),'bodhi-calendar-backup.json');status('Backup downloaded.')};
 el('restore').onclick=()=>el('file').click();
 el('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const obj=JSON.parse(await f.text());if(obj.version!==1||!obj.assignments||typeof obj.assignments!=='object'||Array.isArray(obj.assignments))throw Error('Invalid backup');const cleaned={};for(const [k,v] of Object.entries(obj.assignments)){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&(v===1||v===2))cleaned[k]=v}if(!confirm('Replace the saved calendar with this backup?'))return;assignments=cleaned;localStorage.setItem(KEY,JSON.stringify(assignments));render();status('Backup restored.')}catch(err){status('Could not restore: '+err.message)}finally{e.target.value=''}};
-try{render()}catch(error){status('Calendar initialization error: '+error.message);console.error(error)}
+try{render();status('Calendar ready — tap any date.')}catch(error){status('Calendar initialization error: '+error.message);console.error(error)}
 })();
 </script></body></html>
